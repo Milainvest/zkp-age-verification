@@ -1,4 +1,8 @@
 {
-    "birthDate": 20000101,
-    "currentDate": 20190101
-  }
+  "birthYear": 1994,
+  "birthMonth": 5,
+  "birthDay": 5,
+  "currentYear": 2025,
+  "currentMonth": 2,
+  "currentDay": 26
+}

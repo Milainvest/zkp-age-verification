@@ -4,7 +4,7 @@ import viteLogo from '/vite.svg'
 import './App.css'
 import { ethers } from 'ethers'
 
-const contractAddress = "0x5C7393f88ae378eA86B7136cfcFB1A96E1c1eBED"; // デプロイ後に設定
+const contractAddress = "0xD0450DC112982F5904d3122CAEEa01D5A8021821"; // デプロイ後に設定
 const contractABI = [
   // Verifier.solのABIをここに貼り付ける
   {
@@ -147,13 +147,13 @@ function App() {
 
       // 🚨 修正：適切なデータ変換
       const formattedProof = [
-        [pi_a[0], pi_a[1]], // A
+        [pi_a[0], pi_a[1]],
         [
           [pi_b[0][1], pi_b[0][0]],
           [pi_b[1][1], pi_b[1][0]]
-        ], // B
-        [pi_c[0], pi_c[1]], // C
-        [BigInt(publicSignals[0])] // 🚀 修正
+        ],
+        [pi_c[0], pi_c[1]],
+        [BigInt(publicSignals[0])]
       ];
   
       console.log("proofArray:", proofArray);
