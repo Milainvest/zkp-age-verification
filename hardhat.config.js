@@ -1,6 +1,11 @@
 require("@nomicfoundation/hardhat-toolbox");
 require("dotenv").config();
 
+// .env の値をチェックしてエラーを出す（デバッグ用）
+if (!process.env.WALLET_PRIVATE_KEY || process.env.WALLET_PRIVATE_KEY.length < 64) {
+  throw new Error("Invalid WALLET_PRIVATE_KEY. Please check your .env file.");
+}
+
 /** @type import('hardhat/config').HardhatUserConfig */
 module.exports = {
   solidity: "0.8.28",

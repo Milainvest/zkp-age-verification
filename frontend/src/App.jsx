@@ -4,10 +4,43 @@ import viteLogo from '/vite.svg'
 import './App.css'
 import { ethers } from 'ethers'
 
-const contractAddress = "YOUR_DEPLOYED_CONTRACT_ADDRESS"; // デプロイ後に設定
+const contractAddress = "0xead473e61Af05D613513354717a81197B4332fe5"; // デプロイ後に設定
 const contractABI = [
   // Verifier.solのABIをここに貼り付ける
-  0xead473e61Af05D613513354717a81197B4332fe5
+  {
+    "inputs": [
+      {
+        "internalType": "uint256[2]",
+        "name": "_pA",
+        "type": "uint256[2]"
+      },
+      {
+        "internalType": "uint256[2][2]",
+        "name": "_pB",
+        "type": "uint256[2][2]"
+      },
+      {
+        "internalType": "uint256[2]",
+        "name": "_pC",
+        "type": "uint256[2]"
+      },
+      {
+        "internalType": "uint256[1]",
+        "name": "_pubSignals",
+        "type": "uint256[1]"
+      }
+    ],
+    "name": "verifyProof",
+    "outputs": [
+      {
+        "internalType": "bool",
+        "name": "",
+        "type": "bool"
+      }
+    ],
+    "stateMutability": "view",
+    "type": "function"
+  }
 ];
 
 function App() {
