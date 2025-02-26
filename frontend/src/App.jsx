@@ -122,7 +122,7 @@ function App() {
         publicSignals
       ];
 
-          // 🚨 修正：undefined が含まれていないかチェック
+      // 🚨 修正：undefined が含まれていないかチェック
       if (!pi_a || !pi_b || !pi_c || !publicSignals) {
         console.error("Invalid proof format:", proof);
         console.error("Invalid proof array structure:", proof);
@@ -135,15 +135,15 @@ function App() {
       }
 
       // 🚨 修正：配列の長さを確認（誤った長さならエラー）
-      if (pi_a.length !== 2 || pi_b.length !== 2 || pi_c.length !== 2 || publicSignals.length !== 1) {
-        console.error("Invalid proof array structure:", proof);
-        console.log("pi_a:", pi_a);
-        console.log("pi_b:", pi_b);
-        console.log("pi_c:", pi_c);
-        console.log("publicSignals:", publicSignals);
-        alert("証明データの形式が正しくありません。");
-        return;
-      }
+      // if (pi_a.length !== 2 || pi_b.length !== 2 || pi_c.length !== 2 || publicSignals.length !== 1) {
+      //   console.error("Invalid proof array structure:", proof);
+      //   console.log("pi_a:", pi_a);
+      //   console.log("pi_b:", pi_b);
+      //   console.log("pi_c:", pi_c);
+      //   console.log("publicSignals:", publicSignals);
+      //   alert("証明データの形式が正しくありません。");
+      //   return;
+      // }
 
       // 🚨 修正：適切なデータ変換
       const formattedProof = [
@@ -160,10 +160,17 @@ function App() {
       console.log("送信する証明:", formattedProof);
   
       const result = await contract.verifyProof(...formattedProof);
-      console.log("検証結果:", result);
-      setVerificationResult(result ? "✅ 有効な証明です" : "❌ 無効な証明です");
+      console.log("Verification result:", result);
+  
+      if (result) {
+        // 🚀 `publicSignals[0]` の値で18歳以上かを判定
+        const isAdult = publicSignals[0] === "1";
+        setVerificationResult(isAdult ? "✅ 18歳以上です" : "❌ 18歳未満です");
+      } else {
+        setVerificationResult("⚠️ 無効な証明です");
+      }
     } catch (error) {
-      console.error("証明の検証エラー:", error);
+      console.error("Error verifying proof:", error);
       setVerificationResult("⚠️ 検証エラーが発生しました");
     } finally {
       setLoading(false);
