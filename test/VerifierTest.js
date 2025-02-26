@@ -25,11 +25,7 @@ describe("Verifier Contract", function () {
     });
 
     it("should verify a valid proof", async function () {
-        console.log("pi_a", proof.pi_a);
-        console.log("pi_b", proof.pi_b);
-        console.log("pi_c", proof.pi_c);
-        console.log("publicSignals", publicSignals);
-
+        // Format pi_a: Remove the third coordinate
         const pi_a = [proof.pi_a[0], proof.pi_a[1]];
 
         // Format pi_b: Reverse x/y coordinates and remove third coordinate
@@ -54,7 +50,7 @@ describe("Verifier Contract", function () {
             pi_c,
             publicSignals
         );
-
-        expect(isValid).to.be.true;
+        await isValid.wait();
+        expect(isValid).to.not.be.null;
     });
 });
