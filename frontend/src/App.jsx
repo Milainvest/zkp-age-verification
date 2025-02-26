@@ -4,7 +4,7 @@ import viteLogo from '/vite.svg'
 import './App.css'
 import { ethers } from 'ethers'
 
-const contractAddress = "0x601007b06b842fBF29264BB5CCE79CA1bdfdF77A"; // デプロイ後に設定
+const contractAddress = "0x5C7393f88ae378eA86B7136cfcFB1A96E1c1eBED"; // デプロイ後に設定
 const contractABI = [
   // Verifier.solのABIをここに貼り付ける
   {
@@ -125,6 +125,11 @@ function App() {
           // 🚨 修正：undefined が含まれていないかチェック
       if (!pi_a || !pi_b || !pi_c || !publicSignals) {
         console.error("Invalid proof format:", proof);
+        console.error("Invalid proof array structure:", proof);
+        console.log("pi_a:", pi_a);
+        console.log("pi_b:", pi_b);
+        console.log("pi_c:", pi_c);
+        console.log("publicSignals:", publicSignals);
         alert("証明データが不正です。正しい proof.json をアップロードしてください。");
         return;
       }
@@ -132,21 +137,26 @@ function App() {
       // 🚨 修正：配列の長さを確認（誤った長さならエラー）
       if (pi_a.length !== 2 || pi_b.length !== 2 || pi_c.length !== 2 || publicSignals.length !== 1) {
         console.error("Invalid proof array structure:", proof);
+        console.log("pi_a:", pi_a);
+        console.log("pi_b:", pi_b);
+        console.log("pi_c:", pi_c);
+        console.log("publicSignals:", publicSignals);
         alert("証明データの形式が正しくありません。");
         return;
       }
 
       // 🚨 修正：適切なデータ変換
       const formattedProof = [
-        [BigInt(pi_a[0]), BigInt(pi_a[1])], // A
+        [pi_a[0], pi_a[1]], // A
         [
-          [BigInt(pi_b[0][0]), BigInt(pi_b[0][1])],
-          [BigInt(pi_b[1][0]), BigInt(pi_b[1][1])]
+          [pi_b[0][1], pi_b[0][0]],
+          [pi_b[1][1], pi_b[1][0]]
         ], // B
-        [BigInt(pi_c[0]), BigInt(pi_c[1])], // C
+        [pi_c[0], pi_c[1]], // C
         [BigInt(publicSignals[0])] // 🚀 修正
       ];
   
+      console.log("proofArray:", proofArray);
       console.log("送信する証明:", formattedProof);
   
       const result = await contract.verifyProof(...formattedProof);

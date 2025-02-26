@@ -50,7 +50,6 @@ describe("Verifier Contract", function () {
             pi_c,
             publicSignals
         );
-        await isValid.wait();
-        expect(isValid).to.not.be.null;
+        expect(isValid).to.be.true;
     });
 });
