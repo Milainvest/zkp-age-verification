@@ -321,47 +321,70 @@ function App() {
         alert("MetaMaskをインストールしてください");
         return false;
       }
-      
-      // Request account access using ethers.js v6
-      const provider = new ethers.BrowserProvider(window.ethereum);
-      const signer = await provider.getSigner();
-      const account = await signer.getAddress();
-      
-      setWalletConnected(true);
-      setWalletAddress(account);
-      
-      // Detect the current network
-      await detectNetwork();
-      
-      // Listen for account changes
-      window.ethereum.removeListener('accountsChanged', () => {});
-      window.ethereum.on('accountsChanged', (accounts) => {
-        if (accounts.length === 0) {
-          // User disconnected their wallet
-          setWalletConnected(false);
-          setWalletAddress("");
-        } else {
-          setWalletAddress(accounts[0]);
-        }
+
+      setLoading(true); // Add loading state while connecting
+
+      // Check if already processing a request
+      const accounts = await window.ethereum.request({
+        method: 'eth_accounts'
       });
       
-      // Listen for chain changes
-      window.ethereum.removeListener('chainChanged', () => {});
-      window.ethereum.on('chainChanged', () => {
-        detectNetwork();
+      if (accounts.length > 0) {
+        setWalletConnected(true);
+        setWalletAddress(accounts[0]);
+        await detectNetwork();
+        return true;
+      }
+
+      // Request account access
+      const newAccounts = await window.ethereum.request({
+        method: 'eth_requestAccounts'
       });
       
-      return true;
+      if (newAccounts.length > 0) {
+        setWalletConnected(true);
+        setWalletAddress(newAccounts[0]);
+        await detectNetwork();
+        
+        // Set up listeners only once
+        window.ethereum.removeListener('accountsChanged', handleAccountsChanged);
+        window.ethereum.removeListener('chainChanged', handleChainChanged);
+        
+        window.ethereum.on('accountsChanged', handleAccountsChanged);
+        window.ethereum.on('chainChanged', handleChainChanged);
+        
+        return true;
+      }
+
+      return false;
     } catch (error) {
       console.error("Error connecting wallet:", error);
-      if (error.code === 4001) {
-        // User rejected the request
+      if (error.code === -32002) {
+        alert("MetaMaskの接続リクエストを確認してください");
+      } else if (error.code === 4001) {
         alert("ウォレット接続がキャンセルされました");
       } else {
         alert(`ウォレット接続エラー: ${error.message}`);
       }
       return false;
+    } finally {
+      setLoading(false);
     }
+  };
+
+  // Handle account changes
+  const handleAccountsChanged = (accounts) => {
+    if (accounts.length === 0) {
+      setWalletConnected(false);
+      setWalletAddress("");
+    } else {
+      setWalletAddress(accounts[0]);
+    }
+  };
+
+  // Handle chain changes
+  const handleChainChanged = () => {
+    detectNetwork();
   };
 
   // スマートコントラクトに proof を送信して検証
@@ -567,131 +590,150 @@ function App() {
         <h1>ZKP年齢検証</h1>
         <p className="subtitle">ゼロ知識証明を使用して18歳以上かどうかを検証します</p>
         
-        {/* Network section with enhanced styling */}
-        {walletConnected && (
-          <div className="network-section">
-            <div className="network-info">
-              <div className="network-badge">
-                <div className={`network-dot ${currentNetwork ? 'connected' : ''}`}></div>
-                <span>現在のネットワーク: {currentNetwork ? currentNetwork.name : "不明"}</span>
-              </div>
-              {networkError && <p className="network-error">{networkError}</p>}
-            </div>
-            
-            <div className="network-buttons">
+        {!walletConnected ? (
+          <div className="welcome-section">
+            <div className="welcome-content">
+              <h2>ようこそ</h2>
+              <p>プライバシーを守りながら年齢を証明できます</p>
+              <ul className="feature-list">
+                <li>✨ 個人情報の開示なし</li>
+                <li>🔒 安全な暗号技術</li>
+                <li>⚡ 即時検証</li>
+              </ul>
               <button 
-                className={`network-button ${currentNetwork?.chainId === NETWORKS.SEPOLIA.chainId ? 'active' : ''}`}
-                onClick={switchToSepolia}
-                disabled={currentNetwork?.chainId === NETWORKS.SEPOLIA.chainId}
+                className={`connect-button ${loading ? 'loading' : ''}`} 
+                onClick={connectWallet}
+                disabled={loading}
               >
-                Sepoliaに切り替え
-              </button>
-              <button 
-                className={`network-button ${currentNetwork?.chainId === NETWORKS.LOCAL.chainId ? 'active' : ''}`}
-                onClick={switchToLocal}
-                disabled={currentNetwork?.chainId === NETWORKS.LOCAL.chainId}
-              >
-                ローカルネットワークに切り替え
+                {loading ? (
+                  <div className="loading-spinner"></div>
+                ) : (
+                  <>
+                    <img src="/metamask-logo.svg" alt="MetaMask" className="metamask-logo" />
+                    MetaMaskに接続
+                  </>
+                )}
               </button>
             </div>
-            
-            {/* Local contract address section with enhanced styling */}
-            {currentNetwork?.chainId === NETWORKS.LOCAL.chainId && (
-              <div className="local-contract-section">
-                <div className="contract-info">
-                  <span className="label">コントラクトアドレス:</span>
-                  <code className="address">{NETWORKS.LOCAL.contractAddress}</code>
+          </div>
+        ) : (
+          <>
+            {/* Network section with enhanced styling */}
+            <div className="network-section">
+              <div className="network-info">
+                <div className="network-badge">
+                  <div className={`network-dot ${currentNetwork ? 'connected' : ''}`}></div>
+                  <span>現在のネットワーク: {currentNetwork ? currentNetwork.name : "不明"}</span>
                 </div>
+                {networkError && <p className="network-error">{networkError}</p>}
+              </div>
+              
+              <div className="network-buttons">
                 <button 
-                  className={`address-button ${showLocalAddressInput ? 'active' : ''}`}
-                  onClick={() => setShowLocalAddressInput(!showLocalAddressInput)}
+                  className={`network-button ${currentNetwork?.chainId === NETWORKS.SEPOLIA.chainId ? 'active' : ''}`}
+                  onClick={switchToSepolia}
+                  disabled={currentNetwork?.chainId === NETWORKS.SEPOLIA.chainId}
                 >
-                  {showLocalAddressInput ? "キャンセル" : "アドレスを変更"}
+                  Sepoliaに切り替え
                 </button>
-                
-                {showLocalAddressInput && (
-                  <div className="address-input-container">
-                    <input
-                      type="text"
-                      className="address-input"
-                      placeholder="0x..."
-                      value={localContractAddress}
-                      onChange={(e) => setLocalContractAddress(e.target.value)}
-                    />
-                    <button 
-                      className="update-button"
-                      onClick={updateLocalContractAddress}
-                    >
-                      更新
-                    </button>
+                <button 
+                  className={`network-button ${currentNetwork?.chainId === NETWORKS.LOCAL.chainId ? 'active' : ''}`}
+                  onClick={switchToLocal}
+                  disabled={currentNetwork?.chainId === NETWORKS.LOCAL.chainId}
+                >
+                  ローカルネットワークに切り替え
+                </button>
+              </div>
+              
+              {/* Local contract address section with enhanced styling */}
+              {currentNetwork?.chainId === NETWORKS.LOCAL.chainId && (
+                <div className="local-contract-section">
+                  <div className="contract-info">
+                    <span className="label">コントラクトアドレス:</span>
+                    <code className="address">{NETWORKS.LOCAL.contractAddress}</code>
+                  </div>
+                  <button 
+                    className={`address-button ${showLocalAddressInput ? 'active' : ''}`}
+                    onClick={() => setShowLocalAddressInput(!showLocalAddressInput)}
+                  >
+                    {showLocalAddressInput ? "キャンセル" : "アドレスを変更"}
+                  </button>
+                  
+                  {showLocalAddressInput && (
+                    <div className="address-input-container">
+                      <input
+                        type="text"
+                        className="address-input"
+                        placeholder="0x..."
+                        value={localContractAddress}
+                        onChange={(e) => setLocalContractAddress(e.target.value)}
+                      />
+                      <button 
+                        className="update-button"
+                        onClick={updateLocalContractAddress}
+                      >
+                        更新
+                      </button>
+                    </div>
+                  )}
+                </div>
+              )}
+            </div>
+            
+            {/* Wallet connection section with enhanced styling */}
+            <div className="connect-section">
+              <div className="wallet-info">
+                <div className="wallet-badge">
+                  <div className="wallet-dot"></div>
+                  <span>{truncateAddress(walletAddress)}</span>
+                </div>
+              </div>
+            </div>
+            
+            {/* Verification section with enhanced styling */}
+            <div className="verification-section">
+              <div className="upload-section">
+                <input
+                  type="file"
+                  id="proof-upload"
+                  className="file-input"
+                  onChange={handleFileUpload}
+                  accept=".json"
+                />
+                <label htmlFor="proof-upload" className="file-input-label">
+                  <i className="upload-icon">📄</i>
+                  証明ファイルを選択
+                </label>
+                {uploadedFileName && (
+                  <div className="file-info">
+                    <span className="file-icon">📎</span>
+                    <span className="file-name">{uploadedFileName}</span>
                   </div>
                 )}
               </div>
-            )}
-          </div>
-        )}
-        
-        {/* Wallet connection section with enhanced styling */}
-        <div className="connect-section">
-          {!walletConnected ? (
-            <button className="connect-button" onClick={connectWallet}>
-              <img src="/metamask-logo.svg" alt="MetaMask" className="metamask-logo" />
-              MetaMaskに接続
-            </button>
-          ) : (
-            <div className="wallet-info">
-              <div className="wallet-badge">
-                <div className="wallet-dot"></div>
-                <span>{truncateAddress(walletAddress)}</span>
-              </div>
-            </div>
-          )}
-        </div>
-        
-        {/* Verification section with enhanced styling */}
-        {walletConnected && (
-          <div className="verification-section">
-            <div className="upload-section">
-              <input
-                type="file"
-                id="proof-upload"
-                className="file-input"
-                onChange={handleFileUpload}
-                accept=".json"
-              />
-              <label htmlFor="proof-upload" className="file-input-label">
-                <i className="upload-icon">📄</i>
-                証明ファイルを選択
-              </label>
-              {uploadedFileName && (
-                <div className="file-info">
-                  <span className="file-icon">📎</span>
-                  <span className="file-name">{uploadedFileName}</span>
+              
+              <button
+                className={`verify-button ${!proof || loading ? 'disabled' : ''}`}
+                onClick={verifyProof}
+                disabled={!proof || loading}
+              >
+                {loading ? (
+                  <div className="loading-spinner"></div>
+                ) : (
+                  <>
+                    <i className="verify-icon">🔍</i>
+                    証明を検証
+                  </>
+                )}
+              </button>
+              
+              {verificationResult && (
+                <div className={`result-box ${verificationResult.includes('✅') ? 'success' : 'error'}`}>
+                  {verificationResult}
                 </div>
               )}
             </div>
-            
-            <button
-              className={`verify-button ${!proof || loading ? 'disabled' : ''}`}
-              onClick={verifyProof}
-              disabled={!proof || loading}
-            >
-              {loading ? (
-                <div className="loading-spinner"></div>
-              ) : (
-                <>
-                  <i className="verify-icon">🔍</i>
-                  証明を検証
-                </>
-              )}
-            </button>
-            
-            {verificationResult && (
-              <div className={`result-box ${verificationResult.includes('✅') ? 'success' : 'error'}`}>
-                {verificationResult}
-              </div>
-            )}
-          </div>
+          </>
         )}
       </div>
     </div>
