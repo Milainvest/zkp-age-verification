@@ -50,13 +50,13 @@ const NETWORKS = {
   SEPOLIA: {
     chainId: "0xaa36a7", // 11155111 in hex
     name: "Sepolia",
-    contractAddress: initialContractAddress,
+    contractAddress: contractInfo.sepolia || contractInfo.address, // Fallback to main address
     rpcUrl: "https://sepolia.infura.io/v3/9aa3d95b3bc440fa88ea12eaa4456161"
   },
   LOCAL: {
     chainId: "0x7a69", // 31337 in hex (Hardhat's default)
     name: "Localhost",
-    contractAddress: "0x9fE46736679d2D9a65F0992F2272dE9f3c7fa6e0", // Updated contract address
+    contractAddress: contractInfo.local || contractInfo.address, // Fallback to main address
     rpcUrl: "http://127.0.0.1:8545"
   }
 };

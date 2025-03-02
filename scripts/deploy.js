@@ -1,5 +1,6 @@
 const hre = require("hardhat");
 const fs = require('fs');
+const { updateAddresses } = require('./update-addresses');
 
 async function main() {
     const Verifier = await hre.ethers.getContractFactory("Groth16Verifier");
@@ -20,7 +21,7 @@ async function main() {
         const methodId = verifier.interface.getFunction("verifyProof");
         console.log("✅ Contract has verifyProof method:", methodId.selector);
         
-        // List all available methods - FIX THIS LINE
+        // List all available methods
         const methods = Object.keys(verifier.interface.functions || {});
         console.log("Available methods:", methods);
     } catch (error) {
@@ -44,10 +45,16 @@ async function main() {
     // Also save to a file that the frontend can easily import
     fs.writeFileSync(
         './frontend/src/contractAddress.json',
-        JSON.stringify({ address: verifierAddress }, null, 2)
+        JSON.stringify({ 
+            address: verifierAddress,
+            [hre.network.name]: verifierAddress 
+        }, null, 2)
     );
     
     console.log("✅ Deployment info saved to deployment-info.json and frontend/src/contractAddress.json");
+
+    // Update addresses for the current network
+    await updateAddresses(hre.network.name, verifierAddress);
 }
 
 main()
